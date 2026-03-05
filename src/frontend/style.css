@@ -18,6 +18,7 @@
   --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
   --font-body: 'Segoe UI', -apple-system, sans-serif;
   --font-reading: 'Georgia', 'Cambria', 'Times New Roman', serif;
+  --zoom: 1;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -253,7 +254,7 @@ html, body {
   border: none;
   padding: 28px 32px;
   font-family: var(--font-mono);
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--zoom));
   line-height: 1.8;
   resize: none;
   outline: none;
@@ -291,7 +292,7 @@ html, body {
   margin: 0 auto;
   padding: 36px 32px 60px;
   font-family: var(--font-reading);
-  font-size: 15.5px;
+  font-size: calc(15.5px * var(--zoom));
   line-height: 1.85;
   color: var(--text);
   user-select: text;
@@ -445,6 +446,34 @@ html, body {
 
 #status-info {
   margin-left: auto;
+}
+
+/* ============================================
+   ZOOM TOAST
+   ============================================ */
+#zoom-toast {
+  position: fixed;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: var(--bg-overlay);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+  z-index: 900;
+}
+
+#zoom-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
 }
 
 /* ============================================

@@ -77,6 +77,31 @@ function doSave() {
   sendToRust('save_file', data);
 }
 
+// Zoom
+var zoomLevel = 1;
+var ZOOM_STEP = 0.1;
+var ZOOM_MIN = 0.5;
+var ZOOM_MAX = 3;
+
+function applyZoom(level) {
+  zoomLevel = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, level));
+  document.documentElement.style.setProperty('--zoom', zoomLevel);
+  var toast = document.getElementById('zoom-toast');
+  toast.textContent = Math.round(zoomLevel * 100) + '%';
+  toast.classList.add('visible');
+  clearTimeout(applyZoom._timer);
+  applyZoom._timer = setTimeout(function() {
+    toast.classList.remove('visible');
+  }, 800);
+}
+
+document.addEventListener('wheel', function(e) {
+  if (e.ctrlKey) {
+    e.preventDefault();
+    applyZoom(zoomLevel + (e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP));
+  }
+}, { passive: false });
+
 // Keyboard Shortcuts
 document.addEventListener('keydown', function(e) {
   if (e.ctrlKey && e.key === 'o') {
@@ -104,6 +129,15 @@ document.addEventListener('keydown', function(e) {
   } else if (e.ctrlKey && e.shiftKey && e.key === 'Tab') {
     e.preventDefault();
     TabManager.prevTab();
+  } else if (e.ctrlKey && (e.key === '=' || e.key === '+')) {
+    e.preventDefault();
+    applyZoom(zoomLevel + ZOOM_STEP);
+  } else if (e.ctrlKey && e.key === '-') {
+    e.preventDefault();
+    applyZoom(zoomLevel - ZOOM_STEP);
+  } else if (e.ctrlKey && e.key === '0') {
+    e.preventDefault();
+    applyZoom(1);
   }
 });
 
