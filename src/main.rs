@@ -40,7 +40,7 @@ fn main() {
     let proxy: EventLoopProxy<UserEvent> = event_loop.create_proxy();
 
     let window = WindowBuilder::new()
-        .with_title("mdview - Untitled")
+        .with_title("Peekdown - Untitled")
         .with_decorations(false)
         .with_inner_size(LogicalSize::new(size.0 as f64, size.1 as f64))
         .with_position(LogicalPosition::new(pos.0 as f64, pos.1 as f64))
