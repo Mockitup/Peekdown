@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>/* __CSS__ */</style>
+</head>
+<body>
+  <div id="titlebar">
+    <div class="titlebar-actions">
+      <button id="btn-new" title="New (Ctrl+N)">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M4 1.5h5.5L13 5v9.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.2"/><path d="M9 1.5V5h3.5" stroke="currentColor" stroke-width="1.2"/><path d="M6 9h4M8 7v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      </button>
+      <button id="btn-open" title="Open (Ctrl+O)">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 13V4.5a1 1 0 0 1 1-1h3l1.5 1.5H13a1 1 0 0 1 1 1V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+      <button id="btn-save" title="Save (Ctrl+S)">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M3 1.5h8.5L14 4v9.5a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-12a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.2"/><rect x="5" y="1.5" width="5" height="4" rx="0.5" stroke="currentColor" stroke-width="1.2"/><rect x="4.5" y="9" width="7" height="4.5" rx="0.5" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+      <div class="titlebar-sep"></div>
+      <button id="btn-toggle" title="Toggle Preview (Ctrl+E)">
+        <svg id="icon-preview" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.2"/></svg>
+        <svg id="icon-edit" viewBox="0 0 16 16" fill="none" style="display:none"><path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M9.5 3.5l3 3" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+    </div>
+    <span id="titlebar-title">Untitled</span>
+    <div id="window-controls">
+      <button id="btn-minimize" title="Minimize">
+        <svg viewBox="0 0 10 10"><line x1="2" y1="5" x2="8" y2="5"/></svg>
+      </button>
+      <button id="btn-maximize" title="Maximize">
+        <svg viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" rx="1"/></svg>
+      </button>
+      <button id="btn-close" title="Close">
+        <svg viewBox="0 0 10 10"><line x1="2" y1="2" x2="8" y2="8"/><line x1="8" y1="2" x2="2" y2="8"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="editor-container" class="active">
+    <textarea id="editor" placeholder="Start writing markdown..." spellcheck="false"></textarea>
+  </div>
+
+  <div id="preview-container">
+    <div id="preview"></div>
+  </div>
+
+  <div id="drop-overlay">
+    <div class="drop-message">Drop to open</div>
+  </div>
+
+  <div id="statusbar">
+    <span id="status-mode">EDIT</span>
+    <span id="status-file">Untitled</span>
+    <span id="status-info"></span>
+  </div>
+
+  <!-- __SCRIPTS__ -->
+</body>
+</html>
