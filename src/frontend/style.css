@@ -313,9 +313,13 @@ html, body {
   height: calc(100% - 38px - 30px - 22px);
 }
 
-#preview {
+#preview-wrapper {
+  position: relative;
   max-width: 720px;
   margin: 0 auto;
+}
+
+#preview {
   padding: 36px 32px 60px;
   font-family: var(--font-reading);
   font-size: calc(15.5px * var(--zoom));
@@ -323,6 +327,30 @@ html, body {
   color: var(--text);
   user-select: text;
 }
+
+/* Preview resize handle */
+#preview-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s;
+  z-index: 10;
+}
+
+#preview-resize-handle:hover,
+#preview-resize-handle.dragging {
+  background: var(--accent);
+  opacity: 0.4;
+  border-radius: 3px;
+}
+
+body.preview-resizing { cursor: col-resize !important; }
+body.preview-resizing * { cursor: col-resize !important; }
+body.preview-resizing #preview { user-select: none; }
 
 /* Headings — clean, slightly warm */
 #preview h1, #preview h2, #preview h3,
@@ -534,8 +562,106 @@ html, body {
   text-transform: uppercase;
 }
 
-#status-info {
+#status-counts {
   margin-left: auto;
+  color: var(--text-dim);
+}
+
+#status-info {
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   FIND BAR
+   ============================================ */
+#find-bar {
+  display: none;
+  position: fixed;
+  top: 44px;
+  right: 12px;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 6px;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.has-tabs #find-bar { top: 74px; }
+
+#find-bar.open { display: flex; }
+
+#find-input {
+  width: 180px;
+  height: 24px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 8px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 12px;
+  outline: none;
+}
+
+#find-input:focus { border-color: var(--accent); }
+
+#find-count {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  min-width: 52px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+#find-bar button {
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#find-bar button:hover {
+  background: rgba(128, 128, 128, 0.1);
+  color: var(--text);
+}
+
+#find-bar button svg {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+
+/* Find match highlights in preview */
+mark.find-match {
+  background: rgba(224, 164, 122, 0.25);
+  color: inherit;
+  border-radius: 2px;
+}
+
+mark.find-match.find-active {
+  background: var(--accent);
+  color: var(--bg-base);
+}
+
+[data-theme="light"] mark.find-match {
+  background: rgba(196, 114, 58, 0.2);
+}
+
+[data-theme="light"] mark.find-match.find-active {
+  background: var(--accent);
+  color: #fff;
 }
 
 /* ============================================

@@ -117,6 +117,7 @@ var TabManager = (function() {
     }
 
     document.getElementById('status-file').textContent = tab.filename;
+    if (typeof updateWordCount === 'function') updateWordCount();
   }
 
   function markDirty(id) {

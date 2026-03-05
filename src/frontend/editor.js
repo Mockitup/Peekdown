@@ -6,6 +6,7 @@
     clearTimeout(changeTimer);
     changeTimer = setTimeout(function() {
       TabManager.markDirty();
+      updateWordCount();
     }, 300);
   });
 

@@ -44,12 +44,29 @@
 
   <div id="tab-bar"></div>
 
+  <div id="find-bar">
+    <input id="find-input" type="text" placeholder="Find..." spellcheck="false">
+    <span id="find-count"></span>
+    <button id="find-prev" title="Previous (Shift+Enter)">
+      <svg viewBox="0 0 10 10"><polyline points="2,7 5,3 8,7" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button id="find-next" title="Next (Enter)">
+      <svg viewBox="0 0 10 10"><polyline points="2,3 5,7 8,3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button id="find-close" title="Close (Escape)">
+      <svg viewBox="0 0 10 10"><line x1="2" y1="2" x2="8" y2="8"/><line x1="8" y1="2" x2="2" y2="8"/></svg>
+    </button>
+  </div>
+
   <div id="editor-container" class="active">
     <textarea id="editor" placeholder="Start writing markdown..." spellcheck="false"></textarea>
   </div>
 
   <div id="preview-container">
-    <div id="preview"></div>
+    <div id="preview-wrapper">
+      <div id="preview"></div>
+      <div id="preview-resize-handle"></div>
+    </div>
   </div>
 
   <div id="zoom-toast"></div>
@@ -61,6 +78,7 @@
   <div id="statusbar">
     <span id="status-mode">EDIT</span>
     <span id="status-file">Untitled</span>
+    <span id="status-counts"></span>
     <span id="status-info"></span>
   </div>
 
