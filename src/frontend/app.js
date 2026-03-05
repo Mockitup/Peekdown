@@ -157,8 +157,24 @@ document.getElementById('btn-open').addEventListener('click', function() { sendT
 document.getElementById('btn-save').addEventListener('click', doSave);
 document.getElementById('btn-toggle').addEventListener('click', toggleMode);
 
+// Theme Toggle
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('icon-sun').style.display = theme === 'light' ? '' : 'none';
+  document.getElementById('icon-moon').style.display = theme === 'light' ? 'none' : '';
+  try { localStorage.setItem('mdview-theme', theme); } catch(e) {}
+}
+
+document.getElementById('btn-theme').addEventListener('click', function() {
+  var current = document.documentElement.getAttribute('data-theme') || 'dark';
+  setTheme(current === 'dark' ? 'light' : 'dark');
+});
+
 // Init
 document.addEventListener('DOMContentLoaded', function() {
+  var saved = null;
+  try { saved = localStorage.getItem('mdview-theme'); } catch(e) {}
+  if (saved) setTheme(saved);
   TabManager.createTab(null, '');
   sendToRust('ready');
 });

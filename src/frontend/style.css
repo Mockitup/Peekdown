@@ -21,6 +21,25 @@
   --zoom: 1;
 }
 
+/* Light theme — Catppuccin Latte inspired */
+[data-theme="light"] {
+  --bg-base: #eff1f5;
+  --bg-surface: #e6e9ef;
+  --bg-raised: #dce0e8;
+  --bg-overlay: #ccd0da;
+  --text: #4c4f69;
+  --text-secondary: #6c6f85;
+  --text-dim: #8c8fa1;
+  --accent: #c4723a;
+  --accent-glow: rgba(196, 114, 58, 0.12);
+  --accent-hover: #b5621f;
+  --link: #1e66f5;
+  --border: #ccd0da;
+  --border-subtle: #dce0e8;
+  --danger: #d20f39;
+  --scrollbar: #bcc0cc;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
@@ -79,11 +98,11 @@ html, body {
 
 .titlebar-actions button:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(128, 128, 128, 0.1);
 }
 
 .titlebar-actions button:active {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(128, 128, 128, 0.06);
   transform: scale(0.95);
 }
 
@@ -95,7 +114,7 @@ html, body {
 
 .titlebar-actions button.active:hover {
   color: var(--accent-hover);
-  background: rgba(201, 132, 92, 0.18);
+  background: var(--accent-glow);
 }
 
 /* Separator dot between groups */
@@ -144,17 +163,24 @@ html, body {
 }
 
 #window-controls button:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(128, 128, 128, 0.1);
   color: var(--text-secondary);
 }
 
 #window-controls button svg {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.3;
   stroke-linecap: round;
+}
+
+.window-controls-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  align-self: center;
 }
 
 #btn-close:hover {
@@ -196,7 +222,7 @@ html, body {
 
 .tab:hover {
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(128, 128, 128, 0.08);
 }
 
 .tab.active {
@@ -268,7 +294,7 @@ html, body {
 }
 
 #editor::selection {
-  background: rgba(201, 132, 92, 0.2);
+  background: var(--accent-glow);
 }
 
 /* ============================================
@@ -396,6 +422,37 @@ html, body {
 #preview pre code .hljs-emphasis { font-style: italic; }
 #preview pre code .hljs-strong { font-weight: 600; }
 
+/* Syntax highlighting — light theme (Catppuccin Latte) */
+[data-theme="light"] #preview pre code .hljs-keyword,
+[data-theme="light"] #preview pre code .hljs-selector-tag { color: #8839ef; }
+[data-theme="light"] #preview pre code .hljs-built_in { color: #d20f39; }
+[data-theme="light"] #preview pre code .hljs-type,
+[data-theme="light"] #preview pre code .hljs-title.class_ { color: #df8e1d; }
+[data-theme="light"] #preview pre code .hljs-title.function_,
+[data-theme="light"] #preview pre code .hljs-title { color: #1e66f5; }
+[data-theme="light"] #preview pre code .hljs-string,
+[data-theme="light"] #preview pre code .hljs-addition { color: #40a02b; }
+[data-theme="light"] #preview pre code .hljs-number,
+[data-theme="light"] #preview pre code .hljs-literal { color: #fe640b; }
+[data-theme="light"] #preview pre code .hljs-comment,
+[data-theme="light"] #preview pre code .hljs-quote { color: #9ca0b0; }
+[data-theme="light"] #preview pre code .hljs-deletion { color: #d20f39; }
+[data-theme="light"] #preview pre code .hljs-attr,
+[data-theme="light"] #preview pre code .hljs-attribute { color: #df8e1d; }
+[data-theme="light"] #preview pre code .hljs-variable,
+[data-theme="light"] #preview pre code .hljs-template-variable { color: #ea76cb; }
+[data-theme="light"] #preview pre code .hljs-regexp { color: #ea76cb; }
+[data-theme="light"] #preview pre code .hljs-meta,
+[data-theme="light"] #preview pre code .hljs-meta .hljs-keyword { color: #fe640b; }
+[data-theme="light"] #preview pre code .hljs-tag { color: #1e66f5; }
+[data-theme="light"] #preview pre code .hljs-name { color: #8839ef; }
+[data-theme="light"] #preview pre code .hljs-selector-class,
+[data-theme="light"] #preview pre code .hljs-selector-id { color: #04a5e5; }
+[data-theme="light"] #preview pre code .hljs-params { color: var(--text); }
+[data-theme="light"] #preview pre code .hljs-punctuation { color: #6c6f85; }
+[data-theme="light"] #preview pre code .hljs-symbol { color: #dd7878; }
+[data-theme="light"] #preview pre code .hljs-section { color: #1e66f5; }
+
 /* Blockquotes */
 #preview blockquote {
   border-left: 2px solid var(--accent);
@@ -516,7 +573,8 @@ html, body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(17, 17, 19, 0.94);
+  background: var(--bg-base);
+  opacity: 0.96;
   z-index: 1000;
   justify-content: center;
   align-items: center;
