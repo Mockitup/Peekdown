@@ -13,13 +13,15 @@ struct IpcMessage {
     content: Option<String>,
     #[serde(default)]
     path: Option<String>,
+    #[serde(default)]
+    title: Option<String>,
 }
 
 pub fn handle_ipc_message(
     msg: &str,
     webview: &WebView,
     window: &Window,
-    state: &Arc<Mutex<AppState>>,
+    _state: &Arc<Mutex<AppState>>,
 ) {
     let parsed: IpcMessage = match serde_json::from_str(msg) {
         Ok(m) => m,
@@ -35,10 +37,6 @@ pub fn handle_ipc_message(
             if let Some(p) = path {
                 match file_ops::read_file(&p) {
                     Ok(contents) => {
-                        let mut s = state.lock().unwrap();
-                        s.current_file = Some(p.clone());
-                        s.dirty = false;
-                        window.set_title(&format!("mdview - {}", file_ops::filename(&p)));
                         send_to_js(webview, "file_opened", &serde_json::json!({
                             "content": contents,
                             "path": p
@@ -51,47 +49,28 @@ pub fn handle_ipc_message(
             }
         }
         "save_file" => {
-            let s = state.lock().unwrap();
-            let current_file = s.current_file.clone();
-            drop(s);
-
-            if let (Some(path), Some(content)) = (current_file, &parsed.content) {
-                match file_ops::write_file(&path, content) {
-                    Ok(_) => {
-                        state.lock().unwrap().dirty = false;
-                        window.set_title(&format!("mdview - {}", file_ops::filename(&path)));
-                        send_to_js(webview, "file_saved", &serde_json::json!({}));
+            if let Some(ref content) = parsed.content {
+                if let Some(ref path) = parsed.path {
+                    match file_ops::write_file(path, content) {
+                        Ok(_) => {
+                            send_to_js(webview, "file_saved", &serde_json::json!({
+                                "path": path
+                            }));
+                        }
+                        Err(e) => send_to_js(webview, "error", &serde_json::json!({
+                            "message": format!("Failed to save: {e}")
+                        })),
                     }
-                    Err(e) => send_to_js(webview, "error", &serde_json::json!({
-                        "message": format!("Failed to save: {e}")
-                    })),
+                } else {
+                    handle_save_as(webview, parsed.content);
                 }
-            } else {
-                handle_save_as(webview, window, state, parsed.content);
             }
         }
         "save_as" => {
-            handle_save_as(webview, window, state, parsed.content);
+            handle_save_as(webview, parsed.content);
         }
-        "new_file" => {
-            let mut s = state.lock().unwrap();
-            s.current_file = None;
-            s.dirty = false;
-            window.set_title("mdview - Untitled");
-            send_to_js(webview, "file_opened", &serde_json::json!({
-                "content": "",
-                "path": ""
-            }));
-        }
-        "content_changed" => {
-            let mut s = state.lock().unwrap();
-            if !s.dirty {
-                s.dirty = true;
-                let title = if let Some(ref p) = s.current_file {
-                    format!("mdview - {} *", file_ops::filename(p))
-                } else {
-                    "mdview - Untitled *".to_string()
-                };
+        "set_title" => {
+            if let Some(title) = parsed.title {
                 window.set_title(&title);
             }
         }
@@ -102,7 +81,6 @@ pub fn handle_ipc_message(
             window.set_maximized(!window.is_maximized());
         }
         "window_close" => {
-            // Save window state before closing
             let inner_size = window.inner_size();
             let outer_pos = window.outer_position().unwrap_or_default();
             crate::window_state::save_window_state(
@@ -111,28 +89,22 @@ pub fn handle_ipc_message(
             );
             std::process::exit(0);
         }
-        "ready" => {
-            // Frontend loaded; open file from CLI args if provided
-        }
+        "ready" => {}
         _ => eprintln!("Unknown IPC command: {}", parsed.command),
     }
 }
 
 fn handle_save_as(
     webview: &WebView,
-    window: &Window,
-    state: &Arc<Mutex<AppState>>,
     content: Option<String>,
 ) {
     if let Some(content) = content {
         if let Some(path) = file_ops::pick_save_file() {
             match file_ops::write_file(&path, &content) {
                 Ok(_) => {
-                    let mut s = state.lock().unwrap();
-                    s.current_file = Some(path.clone());
-                    s.dirty = false;
-                    window.set_title(&format!("mdview - {}", file_ops::filename(&path)));
-                    send_to_js(webview, "file_saved", &serde_json::json!({}));
+                    send_to_js(webview, "file_saved", &serde_json::json!({
+                        "path": path
+                    }));
                 }
                 Err(e) => send_to_js(webview, "error", &serde_json::json!({
                     "message": format!("Failed to save: {e}")

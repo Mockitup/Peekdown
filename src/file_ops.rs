@@ -1,7 +1,5 @@
 use rfd::FileDialog;
 use std::fs;
-use std::path::Path;
-
 pub fn pick_open_file() -> Option<String> {
     FileDialog::new()
         .add_filter("Markdown", &["md", "markdown", "txt"])
@@ -25,11 +23,4 @@ pub fn read_file(path: &str) -> Result<String, std::io::Error> {
 
 pub fn write_file(path: &str, content: &str) -> Result<(), std::io::Error> {
     fs::write(path, content)
-}
-
-pub fn filename(path: &str) -> String {
-    Path::new(path)
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| path.to_string())
 }

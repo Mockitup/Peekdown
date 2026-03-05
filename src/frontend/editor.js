@@ -5,19 +5,19 @@
   editor.addEventListener('input', function() {
     clearTimeout(changeTimer);
     changeTimer = setTimeout(function() {
-      sendToRust('content_changed');
+      TabManager.markDirty();
     }, 300);
   });
 
-  // Tab key inserts spaces
+  // Tab key inserts spaces (but not Ctrl+Tab which switches tabs)
   editor.addEventListener('keydown', function(e) {
-    if (e.key === 'Tab') {
+    if (e.key === 'Tab' && !e.ctrlKey) {
       e.preventDefault();
       var start = editor.selectionStart;
       var end = editor.selectionEnd;
       editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
       editor.selectionStart = editor.selectionEnd = start + 4;
-      sendToRust('content_changed');
+      TabManager.markDirty();
     }
   });
 })();

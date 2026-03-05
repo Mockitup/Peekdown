@@ -8,9 +8,13 @@ function sendToRust(command, data) {
 window.__fromRust = function(event, data) {
   switch (event) {
     case 'file_opened':
-      onFileOpened(data.content, data.path);
+      TabManager.createTab(data.path, data.content);
       break;
     case 'file_saved':
+      TabManager.markClean();
+      if (data.path) {
+        TabManager.updateTabPath(null, data.path);
+      }
       onFileSaved();
       break;
     case 'error':
@@ -53,16 +57,6 @@ function setTitle(title) {
   document.getElementById('titlebar-title').textContent = title;
 }
 
-function onFileOpened(content, path) {
-  document.getElementById('editor').value = content;
-  var filename = path ? path.split(/[/\\]/).pop() : 'Untitled';
-  document.getElementById('status-file').textContent = filename;
-  setTitle(filename);
-  if (currentMode === 'preview') {
-    document.getElementById('preview').innerHTML = marked.parse(content);
-  }
-}
-
 function onFileSaved() {
   var info = document.getElementById('status-info');
   info.textContent = 'Saved';
@@ -76,6 +70,13 @@ function showError(message) {
   setTimeout(function() { info.textContent = ''; info.style.color = ''; }, 5000);
 }
 
+function doSave() {
+  var tab = TabManager.getActiveTab();
+  var data = { content: document.getElementById('editor').value };
+  if (tab && tab.path) data.path = tab.path;
+  sendToRust('save_file', data);
+}
+
 // Keyboard Shortcuts
 document.addEventListener('keydown', function(e) {
   if (e.ctrlKey && e.key === 'o') {
@@ -83,7 +84,7 @@ document.addEventListener('keydown', function(e) {
     sendToRust('open_file');
   } else if (e.ctrlKey && !e.shiftKey && e.key === 's') {
     e.preventDefault();
-    sendToRust('save_file', { content: document.getElementById('editor').value });
+    doSave();
   } else if (e.ctrlKey && e.shiftKey && (e.key === 'S' || e.key === 's')) {
     e.preventDefault();
     sendToRust('save_as', { content: document.getElementById('editor').value });
@@ -92,24 +93,38 @@ document.addEventListener('keydown', function(e) {
     toggleMode();
   } else if (e.ctrlKey && e.key === 'n') {
     e.preventDefault();
-    sendToRust('new_file');
+    TabManager.createTab(null, '');
+  } else if (e.ctrlKey && e.key === 'w') {
+    e.preventDefault();
+    var active = TabManager.getActiveTab();
+    if (active) TabManager.closeTab(active.id);
+  } else if (e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
+    e.preventDefault();
+    TabManager.nextTab();
+  } else if (e.ctrlKey && e.shiftKey && e.key === 'Tab') {
+    e.preventDefault();
+    TabManager.prevTab();
   }
 });
 
 // Window Controls
 document.getElementById('btn-minimize').addEventListener('click', function() { sendToRust('window_minimize'); });
 document.getElementById('btn-maximize').addEventListener('click', function() { sendToRust('window_maximize'); });
-document.getElementById('btn-close').addEventListener('click', function() { sendToRust('window_close'); });
+document.getElementById('btn-close').addEventListener('click', function() {
+  if (TabManager.hasAnyDirty()) {
+    if (!confirm('You have unsaved changes. Close anyway?')) return;
+  }
+  sendToRust('window_close');
+});
 
 // Toolbar Buttons
-document.getElementById('btn-new').addEventListener('click', function() { sendToRust('new_file'); });
+document.getElementById('btn-new').addEventListener('click', function() { TabManager.createTab(null, ''); });
 document.getElementById('btn-open').addEventListener('click', function() { sendToRust('open_file'); });
-document.getElementById('btn-save').addEventListener('click', function() {
-  sendToRust('save_file', { content: document.getElementById('editor').value });
-});
+document.getElementById('btn-save').addEventListener('click', doSave);
 document.getElementById('btn-toggle').addEventListener('click', toggleMode);
 
 // Init
 document.addEventListener('DOMContentLoaded', function() {
+  TabManager.createTab(null, '');
   sendToRust('ready');
 });
