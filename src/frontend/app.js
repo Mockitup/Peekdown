@@ -28,6 +28,71 @@ window.__fromRust = function(event, data) {
 var currentMode = 'edit';
 var splitMode = false;
 
+// Cross-mode selection helpers
+function selectInPreview(text, ratio) {
+  var preview = document.getElementById('preview');
+  var walker = document.createTreeWalker(preview, NodeFilter.SHOW_TEXT);
+  var nodes = [], node, fullText = '';
+  while (node = walker.nextNode()) {
+    nodes.push({ node: node, start: fullText.length });
+    fullText += node.textContent;
+  }
+  if (!nodes.length) return false;
+  var textLower = text.toLowerCase(), fullLower = fullText.toLowerCase();
+  var occurrences = [], idx = 0;
+  while ((idx = fullLower.indexOf(textLower, idx)) !== -1) {
+    occurrences.push(idx);
+    idx += 1;
+  }
+  if (!occurrences.length) return false;
+  var targetPos = ratio * fullText.length;
+  var best = occurrences.reduce(function(a, b) {
+    return Math.abs(b - targetPos) < Math.abs(a - targetPos) ? b : a;
+  });
+  var startPos = best, endPos = best + text.length;
+  var startNode, startOffset, endNode, endOffset;
+  for (var i = 0; i < nodes.length; i++) {
+    var ns = nodes[i].start, ne = ns + nodes[i].node.textContent.length;
+    if (!startNode && startPos >= ns && startPos < ne) {
+      startNode = nodes[i].node; startOffset = startPos - ns;
+    }
+    if (endPos >= ns && endPos <= ne) {
+      endNode = nodes[i].node; endOffset = endPos - ns;
+    }
+  }
+  if (!startNode || !endNode) return false;
+  var range = document.createRange();
+  range.setStart(startNode, startOffset);
+  range.setEnd(endNode, endOffset);
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  if (startNode.parentElement) startNode.parentElement.scrollIntoView({ block: 'center' });
+  return true;
+}
+
+function selectInEditor(text, ratio) {
+  var editor = document.getElementById('editor');
+  var valueLower = editor.value.toLowerCase(), textLower = text.toLowerCase();
+  var occurrences = [], idx = 0;
+  while ((idx = valueLower.indexOf(textLower, idx)) !== -1) {
+    occurrences.push(idx);
+    idx += 1;
+  }
+  if (!occurrences.length) return false;
+  var targetPos = ratio * editor.value.length;
+  var best = occurrences.reduce(function(a, b) {
+    return Math.abs(b - targetPos) < Math.abs(a - targetPos) ? b : a;
+  });
+  editor.selectionStart = best;
+  editor.selectionEnd = best + text.length;
+  var lines = editor.value.substring(0, best).split('\n');
+  var approxLine = lines.length - 1;
+  var totalLines = editor.value.split('\n').length;
+  editor.scrollTop = (approxLine / totalLines) * editor.scrollHeight - editor.clientHeight / 3;
+  return true;
+}
+
 // Mode Toggle
 function toggleMode() {
   if (splitMode) {
@@ -40,7 +105,10 @@ function toggleMode() {
   var iconEdit = document.getElementById('icon-edit');
 
   if (currentMode === 'edit') {
-    var content = document.getElementById('editor').value;
+    var editor = document.getElementById('editor');
+    var content = editor.value;
+    var selectedText = content.substring(editor.selectionStart, editor.selectionEnd);
+    var scrollRatio = content.length > 0 ? editor.selectionStart / content.length : 0;
     document.getElementById('preview').innerHTML = marked.parse(content);
     document.getElementById('editor-container').classList.remove('active');
     document.getElementById('preview-container').classList.add('active');
@@ -49,8 +117,18 @@ function toggleMode() {
     iconPreview.style.display = 'none';
     iconEdit.style.display = '';
     currentMode = 'preview';
+    var pc = document.getElementById('preview-container');
+    setTimeout(function() {
+      if (!selectedText || !selectInPreview(selectedText, scrollRatio)) {
+        pc.scrollTop = scrollRatio * (pc.scrollHeight - pc.clientHeight);
+      }
+    }, 0);
     if (findState.open) doFind(document.getElementById('find-input').value);
   } else {
+    var sel = window.getSelection();
+    var selectedText = sel.toString();
+    var pc = document.getElementById('preview-container');
+    var scrollRatio = pc.scrollHeight > pc.clientHeight ? pc.scrollTop / (pc.scrollHeight - pc.clientHeight) : 0;
     document.getElementById('preview-container').classList.remove('active');
     document.getElementById('editor-container').classList.add('active');
     document.getElementById('btn-toggle').classList.remove('active');
@@ -58,7 +136,13 @@ function toggleMode() {
     iconPreview.style.display = '';
     iconEdit.style.display = 'none';
     currentMode = 'edit';
-    document.getElementById('editor').focus();
+    var editor = document.getElementById('editor');
+    editor.focus();
+    if (!selectedText || !selectInEditor(selectedText, scrollRatio)) {
+      var pos = Math.round(scrollRatio * editor.value.length);
+      editor.selectionStart = editor.selectionEnd = pos;
+      editor.scrollTop = scrollRatio * (editor.scrollHeight - editor.clientHeight);
+    }
     if (findState.open) doFind(document.getElementById('find-input').value);
   }
 }
