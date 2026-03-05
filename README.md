@@ -4,6 +4,9 @@ A lightweight native Windows markdown viewer and editor. Notepad-fast startup, O
 
 Built with Rust + WebView2. No installer, no runtime dependencies, no Electron.
 
+![Preview mode](screenshot%201.jpg)
+![Split view](screenshot%202.jpg)
+
 ## Features
 
 - **Instant startup** — native window, no framework overhead

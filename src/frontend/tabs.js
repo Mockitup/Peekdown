@@ -106,6 +106,7 @@ var TabManager = (function() {
       editor.selectionEnd = tab.cursorEnd;
       editor.focus();
       document.getElementById('preview').innerHTML = marked.parse(tab.content);
+      if (typeof resolveLocalImages === 'function') resolveLocalImages();
     } else {
       if (tab.mode !== currentMode) {
         toggleMode();
@@ -117,6 +118,7 @@ var TabManager = (function() {
         editor.focus();
       } else {
         document.getElementById('preview').innerHTML = marked.parse(tab.content);
+        if (typeof resolveLocalImages === 'function') resolveLocalImages();
         setTimeout(function() {
           document.getElementById('preview-container').scrollTop = tab.scrollTop;
         }, 0);

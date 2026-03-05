@@ -589,26 +589,25 @@ body.preview-resizing #preview { user-select: none; }
    TABLE OF CONTENTS
    ============================================ */
 #toc-panel {
-  display: none;
-  position: fixed;
-  top: 38px;
-  left: 0;
-  width: 220px;
-  bottom: 22px;
+  width: 0;
+  height: 100%;
   background: var(--bg-surface);
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-  z-index: 50;
-  padding: 10px 0;
+  border-right: 1px solid transparent;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width 0.2s ease, border-color 0.2s ease;
 }
 
-.has-tabs #toc-panel { top: 68px; }
-
-#toc-panel.open { display: block; }
+#toc-panel.open {
+  width: 220px;
+  border-right-color: var(--border);
+  overflow-y: auto;
+}
 
 #toc-list {
   display: flex;
   flex-direction: column;
+  width: 220px;
 }
 
 .toc-item {

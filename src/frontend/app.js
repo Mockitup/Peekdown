@@ -110,6 +110,7 @@ function toggleMode() {
     var selectedText = content.substring(editor.selectionStart, editor.selectionEnd);
     var scrollRatio = content.length > 0 ? editor.selectionStart / content.length : 0;
     document.getElementById('preview').innerHTML = marked.parse(content);
+    resolveLocalImages();
     document.getElementById('editor-container').classList.remove('active');
     document.getElementById('preview-container').classList.add('active');
     document.getElementById('btn-toggle').classList.add('active');
@@ -187,6 +188,7 @@ function toggleSplit() {
     document.getElementById('editor-container').classList.add('active');
     document.getElementById('preview-container').classList.add('active');
     document.getElementById('preview').innerHTML = marked.parse(document.getElementById('editor').value);
+    resolveLocalImages();
     currentMode = 'edit';
     document.getElementById('btn-toggle').classList.remove('active');
     document.getElementById('status-mode').textContent = 'SPLIT';
@@ -202,6 +204,7 @@ function updateSplitPreview() {
   clearTimeout(splitPreviewTimer);
   splitPreviewTimer = setTimeout(function() {
     document.getElementById('preview').innerHTML = marked.parse(document.getElementById('editor').value);
+    resolveLocalImages();
   }, 150);
 }
 
