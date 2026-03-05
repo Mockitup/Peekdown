@@ -1517,19 +1517,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2532096657941c2fea9c289d370a250971c689d4f143798ff67113ec042024a5"
 
 [[package]]
-name = "mdview"
-version = "0.1.0"
-dependencies = [
- "dirs",
- "rfd",
- "serde",
- "serde_json",
- "tao",
- "winresource",
- "wry",
-]
-
-[[package]]
 name = "memchr"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1774,6 +1761,19 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-link 0.2.1",
+]
+
+[[package]]
+name = "peekdown"
+version = "0.1.0"
+dependencies = [
+ "dirs",
+ "rfd",
+ "serde",
+ "serde_json",
+ "tao",
+ "winresource",
+ "wry",
 ]
 
 [[package]]
