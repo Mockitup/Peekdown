@@ -7,6 +7,8 @@
     changeTimer = setTimeout(function() {
       TabManager.markDirty();
       updateWordCount();
+      if (typeof showRecentPanel === 'function') showRecentPanel();
+      if (typeof tocOpen !== 'undefined' && tocOpen) updateTOC();
     }, 300);
   });
 

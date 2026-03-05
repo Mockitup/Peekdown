@@ -8,6 +8,7 @@ function sendToRust(command, data) {
 window.__fromRust = function(event, data) {
   switch (event) {
     case 'file_opened':
+      addRecentFile(data.path);
       TabManager.createTab(data.path, data.content);
       break;
     case 'file_saved':
@@ -77,6 +78,127 @@ function updateWordCount() {
   var text = document.getElementById('editor').value;
   var words = text.trim() ? text.trim().split(/\s+/).length : 0;
   document.getElementById('status-counts').textContent = words + ' word' + (words !== 1 ? 's' : '');
+}
+
+// Recent Files
+function getRecentFiles() {
+  try { return JSON.parse(localStorage.getItem('mdview-recent')) || []; } catch(e) { return []; }
+}
+
+function addRecentFile(path) {
+  if (!path) return;
+  var recent = getRecentFiles();
+  var filename = path.split(/[/\\]/).pop();
+  recent = recent.filter(function(r) { return r.path.replace(/\\/g, '/').toLowerCase() !== path.replace(/\\/g, '/').toLowerCase(); });
+  recent.unshift({ path: path, filename: filename });
+  if (recent.length > 10) recent = recent.slice(0, 10);
+  try { localStorage.setItem('mdview-recent', JSON.stringify(recent)); } catch(e) {}
+}
+
+function showRecentPanel() {
+  var panel = document.getElementById('recent-panel');
+  var tab = TabManager.getActiveTab();
+  if (!tab || tab.path || tab.dirty || tab.content !== '') {
+    panel.classList.remove('visible');
+    return;
+  }
+  var recent = getRecentFiles();
+  if (recent.length === 0) { panel.classList.remove('visible'); return; }
+  panel.innerHTML = '';
+  var title = document.createElement('div');
+  title.className = 'recent-title';
+  title.textContent = 'Recent Files';
+  panel.appendChild(title);
+  recent.forEach(function(r) {
+    var item = document.createElement('div');
+    item.className = 'recent-item';
+    var name = document.createElement('span');
+    name.className = 'recent-name';
+    name.textContent = r.filename;
+    var path = document.createElement('span');
+    path.className = 'recent-path';
+    path.textContent = r.path;
+    item.appendChild(name);
+    item.appendChild(path);
+    item.addEventListener('click', function() {
+      sendToRust('open_file', { path: r.path });
+    });
+    panel.appendChild(item);
+  });
+  panel.classList.add('visible');
+}
+
+// Table of Contents
+var tocOpen = false;
+
+function parseTOC(text) {
+  var lines = text.split('\n');
+  var headings = [];
+  var inCodeBlock = false;
+  for (var i = 0; i < lines.length; i++) {
+    if (/^```/.test(lines[i])) { inCodeBlock = !inCodeBlock; continue; }
+    if (inCodeBlock) continue;
+    var match = lines[i].match(/^(#{1,6})\s+(.+)/);
+    if (match) {
+      headings.push({ level: match[1].length, text: match[2].replace(/[#*_`\[\]]/g, '').trim(), line: i });
+    }
+  }
+  return headings;
+}
+
+function updateTOC() {
+  var list = document.getElementById('toc-list');
+  var text = document.getElementById('editor').value;
+  var headings = parseTOC(text);
+  list.innerHTML = '';
+  if (headings.length === 0) {
+    var empty = document.createElement('div');
+    empty.className = 'toc-empty';
+    empty.textContent = 'No headings';
+    list.appendChild(empty);
+    return;
+  }
+  headings.forEach(function(h, idx) {
+    var item = document.createElement('div');
+    item.className = 'toc-item toc-h' + h.level;
+    item.textContent = h.text;
+    item.addEventListener('click', function() {
+      if (currentMode === 'edit') {
+        scrollEditorToLine(h.line);
+      } else {
+        scrollPreviewToHeading(idx);
+      }
+    });
+    list.appendChild(item);
+  });
+}
+
+function scrollEditorToLine(lineNum) {
+  var editor = document.getElementById('editor');
+  var lines = editor.value.split('\n');
+  var pos = 0;
+  for (var i = 0; i < lineNum && i < lines.length; i++) {
+    pos += lines[i].length + 1;
+  }
+  editor.focus();
+  editor.selectionStart = pos;
+  editor.selectionEnd = pos + (lines[lineNum] || '').length;
+  var approxLineHeight = editor.scrollHeight / lines.length;
+  editor.scrollTop = lineNum * approxLineHeight - editor.clientHeight / 3;
+}
+
+function scrollPreviewToHeading(idx) {
+  var headings = document.getElementById('preview').querySelectorAll('h1,h2,h3,h4,h5,h6');
+  if (headings[idx]) {
+    headings[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function toggleTOC() {
+  tocOpen = !tocOpen;
+  document.getElementById('toc-panel').classList.toggle('open', tocOpen);
+  document.getElementById('btn-toc').classList.toggle('active', tocOpen);
+  if (tocOpen) updateTOC();
 }
 
 function doSave() {
@@ -324,6 +446,9 @@ document.addEventListener('keydown', function(e) {
   } else if (e.ctrlKey && e.key === '0') {
     e.preventDefault();
     applyZoom(1);
+  } else if (e.ctrlKey && e.shiftKey && (e.key === 'O' || e.key === 'o')) {
+    e.preventDefault();
+    toggleTOC();
   }
 });
 
@@ -342,6 +467,7 @@ document.getElementById('btn-new').addEventListener('click', function() { TabMan
 document.getElementById('btn-open').addEventListener('click', function() { sendToRust('open_file'); });
 document.getElementById('btn-save').addEventListener('click', doSave);
 document.getElementById('btn-toggle').addEventListener('click', toggleMode);
+document.getElementById('btn-toc').addEventListener('click', toggleTOC);
 
 // Theme Toggle
 function setTheme(theme) {
@@ -363,5 +489,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (saved) setTheme(saved);
   TabManager.createTab(null, '');
   updateWordCount();
+  showRecentPanel();
   sendToRust('ready');
 });
