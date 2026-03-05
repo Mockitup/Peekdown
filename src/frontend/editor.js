@@ -2,6 +2,7 @@
   var editor = document.getElementById('editor');
 
   var changeTimer = null;
+  var splitTimer = null;
   editor.addEventListener('input', function() {
     clearTimeout(changeTimer);
     changeTimer = setTimeout(function() {
@@ -10,6 +11,10 @@
       if (typeof showRecentPanel === 'function') showRecentPanel();
       if (typeof tocOpen !== 'undefined' && tocOpen) updateTOC();
     }, 300);
+    if (typeof splitMode !== 'undefined' && splitMode) {
+      clearTimeout(splitTimer);
+      splitTimer = setTimeout(function() { updateSplitPreview(); }, 100);
+    }
   });
 
   // Tab key inserts spaces (but not Ctrl+Tab which switches tabs)
@@ -21,6 +26,7 @@
       editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
       editor.selectionStart = editor.selectionEnd = start + 4;
       TabManager.markDirty();
+      if (typeof splitMode !== 'undefined' && splitMode) updateSplitPreview();
     }
   });
 })();

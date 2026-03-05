@@ -100,20 +100,27 @@ var TabManager = (function() {
     var editor = document.getElementById('editor');
     editor.value = tab.content;
 
-    if (tab.mode !== currentMode) {
-      toggleMode();
-    }
-
-    if (currentMode === 'edit') {
+    if (typeof splitMode !== 'undefined' && splitMode) {
       editor.scrollTop = tab.scrollTop;
       editor.selectionStart = tab.cursorStart;
       editor.selectionEnd = tab.cursorEnd;
       editor.focus();
-    } else {
       document.getElementById('preview').innerHTML = marked.parse(tab.content);
-      setTimeout(function() {
-        document.getElementById('preview-container').scrollTop = tab.scrollTop;
-      }, 0);
+    } else {
+      if (tab.mode !== currentMode) {
+        toggleMode();
+      }
+      if (currentMode === 'edit') {
+        editor.scrollTop = tab.scrollTop;
+        editor.selectionStart = tab.cursorStart;
+        editor.selectionEnd = tab.cursorEnd;
+        editor.focus();
+      } else {
+        document.getElementById('preview').innerHTML = marked.parse(tab.content);
+        setTimeout(function() {
+          document.getElementById('preview-container').scrollTop = tab.scrollTop;
+        }, 0);
+      }
     }
 
     document.getElementById('status-file').textContent = tab.filename;

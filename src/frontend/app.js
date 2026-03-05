@@ -26,9 +26,16 @@ window.__fromRust = function(event, data) {
 
 // State
 var currentMode = 'edit';
+var splitMode = false;
 
 // Mode Toggle
 function toggleMode() {
+  if (splitMode) {
+    splitMode = false;
+    document.body.classList.remove('split-mode');
+    document.getElementById('btn-split').classList.remove('active');
+  }
+
   var iconPreview = document.getElementById('icon-preview');
   var iconEdit = document.getElementById('icon-edit');
 
@@ -71,6 +78,47 @@ function showError(message) {
   info.textContent = 'Error: ' + message;
   info.style.color = '#c15050';
   setTimeout(function() { info.textContent = ''; info.style.color = ''; }, 5000);
+}
+
+// Split View
+function toggleSplit() {
+  var iconPreview = document.getElementById('icon-preview');
+  var iconEdit = document.getElementById('icon-edit');
+
+  if (splitMode) {
+    splitMode = false;
+    document.body.classList.remove('split-mode');
+    document.getElementById('btn-split').classList.remove('active');
+    document.getElementById('preview-container').classList.remove('active');
+    currentMode = 'edit';
+    document.getElementById('btn-toggle').classList.remove('active');
+    document.getElementById('status-mode').textContent = 'EDIT';
+    iconPreview.style.display = '';
+    iconEdit.style.display = 'none';
+    document.getElementById('editor').focus();
+  } else {
+    splitMode = true;
+    document.body.classList.add('split-mode');
+    document.getElementById('btn-split').classList.add('active');
+    document.getElementById('editor-container').classList.add('active');
+    document.getElementById('preview-container').classList.add('active');
+    document.getElementById('preview').innerHTML = marked.parse(document.getElementById('editor').value);
+    currentMode = 'edit';
+    document.getElementById('btn-toggle').classList.remove('active');
+    document.getElementById('status-mode').textContent = 'SPLIT';
+    iconPreview.style.display = '';
+    iconEdit.style.display = 'none';
+    document.getElementById('editor').focus();
+  }
+}
+
+var splitPreviewTimer = null;
+function updateSplitPreview() {
+  if (!splitMode) return;
+  clearTimeout(splitPreviewTimer);
+  splitPreviewTimer = setTimeout(function() {
+    document.getElementById('preview').innerHTML = marked.parse(document.getElementById('editor').value);
+  }, 150);
 }
 
 // Word count
@@ -446,6 +494,9 @@ document.addEventListener('keydown', function(e) {
   } else if (e.ctrlKey && e.key === '0') {
     e.preventDefault();
     applyZoom(1);
+  } else if (e.ctrlKey && e.key === '\\') {
+    e.preventDefault();
+    toggleSplit();
   } else if (e.ctrlKey && e.shiftKey && (e.key === 'O' || e.key === 'o')) {
     e.preventDefault();
     toggleTOC();
@@ -467,6 +518,7 @@ document.getElementById('btn-new').addEventListener('click', function() { TabMan
 document.getElementById('btn-open').addEventListener('click', function() { sendToRust('open_file'); });
 document.getElementById('btn-save').addEventListener('click', doSave);
 document.getElementById('btn-toggle').addEventListener('click', toggleMode);
+document.getElementById('btn-split').addEventListener('click', toggleSplit);
 document.getElementById('btn-toc').addEventListener('click', toggleTOC);
 
 // Theme Toggle

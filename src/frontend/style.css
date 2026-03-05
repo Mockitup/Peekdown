@@ -258,20 +258,28 @@ html, body {
 .tab-close:hover { opacity: 1 !important; color: var(--text); }
 
 /* ============================================
+   CONTENT AREA
+   ============================================ */
+#content {
+  display: flex;
+  height: calc(100% - 38px - 22px);
+}
+
+.has-tabs #content {
+  height: calc(100% - 38px - 30px - 22px);
+}
+
+/* ============================================
    EDITOR
    ============================================ */
 #editor-container {
   display: none;
   position: relative;
-  height: calc(100% - 38px - 22px);
+  height: 100%;
   background: var(--bg-base);
 }
 
-.has-tabs #editor-container {
-  height: calc(100% - 38px - 30px - 22px);
-}
-
-#editor-container.active { display: block; }
+#editor-container.active { display: block; flex: 1; min-width: 0; }
 
 #editor {
   width: 100%;
@@ -303,16 +311,12 @@ html, body {
    ============================================ */
 #preview-container {
   display: none;
-  height: calc(100% - 38px - 22px);
+  height: 100%;
   background: var(--bg-base);
   overflow-y: auto;
 }
 
-#preview-container.active { display: block; }
-
-.has-tabs #preview-container {
-  height: calc(100% - 38px - 30px - 22px);
-}
+#preview-container.active { display: block; flex: 1; min-width: 0; }
 
 #preview-wrapper {
   position: relative;
@@ -327,6 +331,15 @@ html, body {
   line-height: 1.85;
   color: var(--text);
   user-select: text;
+}
+
+/* Split mode */
+body.split-mode #editor-container.active {
+  border-right: 1px solid var(--border);
+}
+
+body.split-mode #preview-wrapper {
+  max-width: none;
 }
 
 /* Preview resize handle */

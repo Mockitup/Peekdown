@@ -22,6 +22,9 @@
         <svg id="icon-preview" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.2"/></svg>
         <svg id="icon-edit" viewBox="0 0 16 16" fill="none" style="display:none"><path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M9.5 3.5l3 3" stroke="currentColor" stroke-width="1.2"/></svg>
       </button>
+      <button id="btn-split" title="Split View (Ctrl+\)">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="currentColor" stroke-width="1.2"/><line x1="8" y1="2" x2="8" y2="14" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
       <button id="btn-toc" title="Outline (Ctrl+Shift+O)">
         <svg viewBox="0 0 16 16" fill="none"><path d="M3 3h10M3 6.5h7M3 10h8M3 13.5h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
       </button>
@@ -65,15 +68,17 @@
     <div id="toc-list"></div>
   </div>
 
-  <div id="editor-container" class="active">
-    <div id="recent-panel"></div>
-    <textarea id="editor" placeholder="Start writing markdown..." spellcheck="false"></textarea>
-  </div>
+  <div id="content">
+    <div id="editor-container" class="active">
+      <div id="recent-panel"></div>
+      <textarea id="editor" placeholder="Start writing markdown..." spellcheck="false"></textarea>
+    </div>
 
-  <div id="preview-container">
-    <div id="preview-wrapper">
-      <div id="preview"></div>
-      <div id="preview-resize-handle"></div>
+    <div id="preview-container">
+      <div id="preview-wrapper">
+        <div id="preview"></div>
+        <div id="preview-resize-handle"></div>
+      </div>
     </div>
   </div>
 
