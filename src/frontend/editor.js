@@ -2,8 +2,9 @@
   var editor = document.getElementById('editor');
 
   var changeTimer = null;
-  var splitTimer = null;
   editor.addEventListener('input', function() {
+    var activeTab = TabManager.getActiveTab();
+    if (activeTab) activeTab.parsedHtml = null;
     clearTimeout(changeTimer);
     changeTimer = setTimeout(function() {
       TabManager.markDirty();
@@ -12,8 +13,7 @@
       if (typeof tocOpen !== 'undefined' && tocOpen) updateTOC();
     }, 300);
     if (typeof splitMode !== 'undefined' && splitMode) {
-      clearTimeout(splitTimer);
-      splitTimer = setTimeout(function() { updateSplitPreview(); }, 100);
+      updateSplitPreview();
     }
   });
 
@@ -25,6 +25,7 @@
       var end = editor.selectionEnd;
       editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
       editor.selectionStart = editor.selectionEnd = start + 4;
+      editor.dispatchEvent(new Event('input'));
       TabManager.markDirty();
       if (typeof splitMode !== 'undefined' && splitMode) updateSplitPreview();
     }

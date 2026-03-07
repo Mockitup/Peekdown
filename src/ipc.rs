@@ -91,34 +91,24 @@ pub fn handle_ipc_message(
         }
         "read_image" => {
             if let Some(ref path) = parsed.path {
-                match std::fs::read(path) {
-                    Err(e) => eprintln!("read_image failed for {}: {}", path, e),
-                    Ok(data) => {
-                    let ext = std::path::Path::new(path)
-                        .extension()
-                        .and_then(|e| e.to_str())
-                        .unwrap_or("")
-                        .to_lowercase();
-                    let mime = match ext.as_str() {
-                        "png" => "image/png",
-                        "jpg" | "jpeg" => "image/jpeg",
-                        "gif" => "image/gif",
-                        "svg" => "image/svg+xml",
-                        "webp" => "image/webp",
-                        "bmp" => "image/bmp",
-                        _ => "application/octet-stream",
-                    };
-                    let b64 = base64_encode(&data);
-                    let data_uri = format!("data:{};base64,{}", mime, b64);
-                    let script = format!(
-                        "window.__setImage({}, {})",
-                        serde_json::to_string(path).unwrap(),
-                        serde_json::to_string(&data_uri).unwrap(),
-                    );
-                    let _ = webview.evaluate_script(&script);
-                    }
-                }
+                use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+                let encoded = utf8_percent_encode(path, NON_ALPHANUMERIC).to_string();
+                let url = format!("http://peekdown.localhost/local-image?{}", encoded);
+                let script = format!(
+                    "window.__setImage({}, {})",
+                    serde_json::to_string(path).unwrap(),
+                    serde_json::to_string(&url).unwrap(),
+                );
+                let _ = webview.evaluate_script(&script);
             }
+        }
+        "drag_enter" => {
+            let _ = webview.evaluate_script(
+                "document.getElementById('drop-overlay').classList.add('visible')");
+        }
+        "drag_leave" => {
+            let _ = webview.evaluate_script(
+                "document.getElementById('drop-overlay').classList.remove('visible')");
         }
         "ready" => {
             let (pending_file, pending_content, pending_title) = {
@@ -167,30 +157,6 @@ fn handle_save_as(
             }
         }
     }
-}
-
-fn base64_encode(data: &[u8]) -> String {
-    const CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let mut result = String::with_capacity((data.len() + 2) / 3 * 4);
-    for chunk in data.chunks(3) {
-        let b0 = chunk[0] as u32;
-        let b1 = if chunk.len() > 1 { chunk[1] as u32 } else { 0 };
-        let b2 = if chunk.len() > 2 { chunk[2] as u32 } else { 0 };
-        let triple = (b0 << 16) | (b1 << 8) | b2;
-        result.push(CHARS[((triple >> 18) & 0x3F) as usize] as char);
-        result.push(CHARS[((triple >> 12) & 0x3F) as usize] as char);
-        if chunk.len() > 1 {
-            result.push(CHARS[((triple >> 6) & 0x3F) as usize] as char);
-        } else {
-            result.push('=');
-        }
-        if chunk.len() > 2 {
-            result.push(CHARS[(triple & 0x3F) as usize] as char);
-        } else {
-            result.push('=');
-        }
-    }
-    result
 }
 
 fn send_to_js(webview: &WebView, event: &str, data: &serde_json::Value) {

@@ -1765,9 +1765,10 @@ dependencies = [
 
 [[package]]
 name = "peekdown"
-version = "1.0.2"
+version = "1.2.0"
 dependencies = [
  "dirs",
+ "percent-encoding",
  "rfd",
  "serde",
  "serde_json",

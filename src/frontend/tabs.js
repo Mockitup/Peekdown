@@ -39,7 +39,8 @@ var TabManager = (function() {
       mode: forceMode || (path ? 'preview' : 'edit'),
       scrollTop: 0,
       cursorStart: 0,
-      cursorEnd: 0
+      cursorEnd: 0,
+      parsedHtml: null
     };
     tabs.push(tab);
     switchTab(id);
@@ -105,7 +106,13 @@ var TabManager = (function() {
       editor.selectionStart = tab.cursorStart;
       editor.selectionEnd = tab.cursorEnd;
       editor.focus();
-      document.getElementById('preview').innerHTML = marked.parse(tab.content);
+      if (tab.parsedHtml) {
+        document.getElementById('preview').innerHTML = tab.parsedHtml;
+      } else {
+        var html = marked.parse(tab.content);
+        document.getElementById('preview').innerHTML = html;
+        tab.parsedHtml = html;
+      }
       if (typeof resolveLocalImages === 'function') resolveLocalImages();
     } else {
       if (tab.mode !== currentMode) {
@@ -117,7 +124,13 @@ var TabManager = (function() {
         editor.selectionEnd = tab.cursorEnd;
         editor.focus();
       } else {
-        document.getElementById('preview').innerHTML = marked.parse(tab.content);
+        if (tab.parsedHtml) {
+          document.getElementById('preview').innerHTML = tab.parsedHtml;
+        } else {
+          var html = marked.parse(tab.content);
+          document.getElementById('preview').innerHTML = html;
+          tab.parsedHtml = html;
+        }
         if (typeof resolveLocalImages === 'function') resolveLocalImages();
         setTimeout(function() {
           document.getElementById('preview-container').scrollTop = tab.scrollTop;

@@ -27,6 +27,25 @@ window.__fromRust = function(event, data) {
   }
 };
 
+// Cached DOM refs
+var $ = {};
+document.addEventListener('DOMContentLoaded', function() {
+    $.editor = document.getElementById('editor');
+    $.preview = document.getElementById('preview');
+    $.previewContainer = document.getElementById('preview-container');
+    $.editorContainer = document.getElementById('editor-container');
+    $.statusInfo = document.getElementById('status-info');
+    $.statusFile = document.getElementById('status-file');
+    $.titlebarTitle = document.getElementById('titlebar-title');
+    $.dropOverlay = document.getElementById('drop-overlay');
+    $.tocPanel = document.getElementById('toc-panel');
+    $.tocItems = document.getElementById('toc-list');
+    $.findBar = document.getElementById('find-bar');
+    $.findInput = document.getElementById('find-input');
+    $.findCount = document.getElementById('find-count');
+    $.zoomToast = document.getElementById('zoom-toast');
+});
+
 // State
 var currentMode = 'edit';
 var splitMode = false;
@@ -108,51 +127,59 @@ function toggleMode() {
   var iconEdit = document.getElementById('icon-edit');
 
   if (currentMode === 'edit') {
-    var editor = document.getElementById('editor');
+    var editor = $.editor || document.getElementById('editor');
     var content = editor.value;
     var selectedText = content.substring(editor.selectionStart, editor.selectionEnd);
     var scrollRatio = content.length > 0 ? editor.selectionStart / content.length : 0;
-    document.getElementById('preview').innerHTML = marked.parse(content);
+    var tab = TabManager.getActiveTab();
+    var previewEl = $.preview || document.getElementById('preview');
+    if (tab && tab.parsedHtml) {
+      previewEl.innerHTML = tab.parsedHtml;
+    } else {
+      var html = marked.parse(content);
+      previewEl.innerHTML = html;
+      if (tab) tab.parsedHtml = html;
+    }
     resolveLocalImages();
-    document.getElementById('editor-container').classList.remove('active');
-    document.getElementById('preview-container').classList.add('active');
+    ($.editorContainer || document.getElementById('editor-container')).classList.remove('active');
+    ($.previewContainer || document.getElementById('preview-container')).classList.add('active');
     document.getElementById('btn-toggle').classList.add('active');
     document.getElementById('status-mode').textContent = 'PREVIEW';
     iconPreview.style.display = 'none';
     iconEdit.style.display = '';
     currentMode = 'preview';
-    var pc = document.getElementById('preview-container');
+    var pc = $.previewContainer || document.getElementById('preview-container');
     setTimeout(function() {
       if (!selectedText || !selectInPreview(selectedText, scrollRatio)) {
         pc.scrollTop = scrollRatio * (pc.scrollHeight - pc.clientHeight);
       }
     }, 0);
-    if (findState.open) doFind(document.getElementById('find-input').value);
+    if (findState.open) doFind(($.findInput || document.getElementById('find-input')).value);
   } else {
     var sel = window.getSelection();
     var selectedText = sel.toString();
-    var pc = document.getElementById('preview-container');
+    var pc = $.previewContainer || document.getElementById('preview-container');
     var scrollRatio = pc.scrollHeight > pc.clientHeight ? pc.scrollTop / (pc.scrollHeight - pc.clientHeight) : 0;
-    document.getElementById('preview-container').classList.remove('active');
-    document.getElementById('editor-container').classList.add('active');
+    pc.classList.remove('active');
+    ($.editorContainer || document.getElementById('editor-container')).classList.add('active');
     document.getElementById('btn-toggle').classList.remove('active');
     document.getElementById('status-mode').textContent = 'EDIT';
     iconPreview.style.display = '';
     iconEdit.style.display = 'none';
     currentMode = 'edit';
-    var editor = document.getElementById('editor');
+    var editor = $.editor || document.getElementById('editor');
     editor.focus();
     if (!selectedText || !selectInEditor(selectedText, scrollRatio)) {
       var pos = Math.round(scrollRatio * editor.value.length);
       editor.selectionStart = editor.selectionEnd = pos;
       editor.scrollTop = scrollRatio * (editor.scrollHeight - editor.clientHeight);
     }
-    if (findState.open) doFind(document.getElementById('find-input').value);
+    if (findState.open) doFind(($.findInput || document.getElementById('find-input')).value);
   }
 }
 
 function setTitle(title) {
-  document.getElementById('titlebar-title').textContent = title;
+  ($.titlebarTitle || document.getElementById('titlebar-title')).textContent = title;
 }
 
 function onFileSaved() {
@@ -177,20 +204,29 @@ function toggleSplit() {
     splitMode = false;
     document.body.classList.remove('split-mode');
     document.getElementById('btn-split').classList.remove('active');
-    document.getElementById('preview-container').classList.remove('active');
+    ($.previewContainer || document.getElementById('preview-container')).classList.remove('active');
     currentMode = 'edit';
     document.getElementById('btn-toggle').classList.remove('active');
     document.getElementById('status-mode').textContent = 'EDIT';
     iconPreview.style.display = '';
     iconEdit.style.display = 'none';
-    document.getElementById('editor').focus();
+    ($.editor || document.getElementById('editor')).focus();
   } else {
     splitMode = true;
     document.body.classList.add('split-mode');
     document.getElementById('btn-split').classList.add('active');
-    document.getElementById('editor-container').classList.add('active');
-    document.getElementById('preview-container').classList.add('active');
-    document.getElementById('preview').innerHTML = marked.parse(document.getElementById('editor').value);
+    ($.editorContainer || document.getElementById('editor-container')).classList.add('active');
+    ($.previewContainer || document.getElementById('preview-container')).classList.add('active');
+    var splitTab = TabManager.getActiveTab();
+    var splitContent = ($.editor || document.getElementById('editor')).value;
+    var splitPreviewEl = $.preview || document.getElementById('preview');
+    if (splitTab && splitTab.parsedHtml) {
+      splitPreviewEl.innerHTML = splitTab.parsedHtml;
+    } else {
+      var splitHtml = marked.parse(splitContent);
+      splitPreviewEl.innerHTML = splitHtml;
+      if (splitTab) splitTab.parsedHtml = splitHtml;
+    }
     resolveLocalImages();
     currentMode = 'edit';
     document.getElementById('btn-toggle').classList.remove('active');
@@ -206,14 +242,18 @@ function updateSplitPreview() {
   if (!splitMode) return;
   clearTimeout(splitPreviewTimer);
   splitPreviewTimer = setTimeout(function() {
-    document.getElementById('preview').innerHTML = marked.parse(document.getElementById('editor').value);
+    var tab = TabManager.getActiveTab();
+    var content = ($.editor || document.getElementById('editor')).value;
+    var html = marked.parse(content);
+    ($.preview || document.getElementById('preview')).innerHTML = html;
+    if (tab) tab.parsedHtml = html;
     resolveLocalImages();
   }, 150);
 }
 
 // Word count
 function updateWordCount() {
-  var text = document.getElementById('editor').value;
+  var text = ($.editor || document.getElementById('editor')).value;
   var words = text.trim() ? text.trim().split(/\s+/).length : 0;
   document.getElementById('status-counts').textContent = words + ' word' + (words !== 1 ? 's' : '');
 }
@@ -278,15 +318,15 @@ function parseTOC(text) {
     if (inCodeBlock) continue;
     var match = lines[i].match(/^(#{1,6})\s+(.+)/);
     if (match) {
-      headings.push({ level: match[1].length, text: match[2].replace(/[#*_`\[\]]/g, '').trim(), line: i });
+      headings.push({ level: match[1].length, text: match[2].replace(/\s+#+\s*$/, '').replace(/[*_`\[\]]/g, '').trim(), line: i });
     }
   }
   return headings;
 }
 
 function updateTOC() {
-  var list = document.getElementById('toc-list');
-  var text = document.getElementById('editor').value;
+  var list = $.tocItems || document.getElementById('toc-list');
+  var text = ($.editor || document.getElementById('editor')).value;
   var headings = parseTOC(text);
   list.innerHTML = '';
   if (headings.length === 0) {
@@ -355,7 +395,7 @@ var ZOOM_MAX = 3;
 function applyZoom(level) {
   zoomLevel = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, level));
   document.documentElement.style.setProperty('--zoom', zoomLevel);
-  var toast = document.getElementById('zoom-toast');
+  var toast = $.zoomToast || document.getElementById('zoom-toast');
   toast.textContent = Math.round(zoomLevel * 100) + '%';
   toast.classList.add('visible');
   clearTimeout(applyZoom._timer);
@@ -442,11 +482,11 @@ function doFind(term) {
   findState.current = -1;
   clearPreviewHighlights();
   if (!term) {
-    document.getElementById('find-count').textContent = '';
+    ($.findCount || document.getElementById('find-count')).textContent = '';
     return;
   }
   if (currentMode === 'edit') {
-    var text = document.getElementById('editor').value.toLowerCase();
+    var text = ($.editor || document.getElementById('editor')).value.toLowerCase();
     var termLower = term.toLowerCase();
     var idx = 0;
     while ((idx = text.indexOf(termLower, idx)) !== -1) {
@@ -454,7 +494,7 @@ function doFind(term) {
       idx += term.length;
     }
   } else {
-    var preview = document.getElementById('preview');
+    var preview = $.preview || document.getElementById('preview');
     var walker = document.createTreeWalker(preview, NodeFilter.SHOW_TEXT);
     var node, ranges = [], termLower = term.toLowerCase();
     while (node = walker.nextNode()) {

@@ -1,5 +1,6 @@
 #![windows_subsystem = "windows"]
 
+use std::borrow::Cow;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
 use tao::{
@@ -8,7 +9,7 @@ use tao::{
     event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy},
     window::WindowBuilder,
 };
-use wry::WebViewBuilder;
+use wry::{WebViewBuilder, WebViewBuilderExtWindows};
 
 mod file_ops;
 mod ipc;
@@ -97,36 +98,103 @@ fn main() {
         .unwrap();
 
     let full_html = build_html();
+    {
+        app_state.lock().unwrap().html = full_html;
+    }
 
     let proxy_ipc = proxy.clone();
     let proxy_drop = proxy.clone();
 
+    let state_proto = Arc::clone(&app_state);
     let _webview = WebViewBuilder::new()
-        .with_html(&full_html)
+        .with_custom_protocol("peekdown".to_string(), move |_id, request| {
+            let uri = request.uri().path();
+            if uri == "/" || uri == "/index.html" {
+                let st = state_proto.lock().unwrap();
+                wry::http::Response::builder()
+                    .header("Content-Type", "text/html")
+                    .body(Cow::Owned(st.html.as_bytes().to_vec()))
+                    .unwrap()
+            } else if uri.starts_with("/local-image") {
+                let query = request.uri().query().unwrap_or("");
+                let file_path = percent_encoding::percent_decode_str(query)
+                    .decode_utf8_lossy()
+                    .to_string();
+                match std::fs::read(&file_path) {
+                    Ok(data) => {
+                        let ext = std::path::Path::new(&file_path)
+                            .extension()
+                            .and_then(|e| e.to_str())
+                            .unwrap_or("")
+                            .to_lowercase();
+                        let mime = match ext.as_str() {
+                            "png" => "image/png",
+                            "jpg" | "jpeg" => "image/jpeg",
+                            "gif" => "image/gif",
+                            "svg" => "image/svg+xml",
+                            "webp" => "image/webp",
+                            "bmp" => "image/bmp",
+                            "ico" => "image/x-icon",
+                            "tiff" | "tif" => "image/tiff",
+                            _ => "application/octet-stream",
+                        };
+                        wry::http::Response::builder()
+                            .header("Content-Type", mime)
+                            .body(Cow::Owned(data))
+                            .unwrap()
+                    }
+                    Err(_) => wry::http::Response::builder()
+                        .status(404)
+                        .body(Cow::Borrowed(b"Image not found" as &[u8]))
+                        .unwrap(),
+                }
+            } else {
+                wry::http::Response::builder()
+                    .status(404)
+                    .body(Cow::Borrowed(b"Not found" as &[u8]))
+                    .unwrap()
+            }
+        })
+        .with_url("http://peekdown.localhost/")
         .with_ipc_handler(move |request| {
             let body = request.body().to_string();
             let _ = proxy_ipc.send_event(UserEvent::IpcMessage(body));
         })
-        .with_new_window_req_handler(|_| false) // block new windows
+        .with_new_window_req_handler(|_| false)
         .with_drag_drop_handler(move |event| {
             match event {
                 wry::DragDropEvent::Enter { .. } => {
-                    // We'll show overlay via JS
+                    let msg = serde_json::json!({"command": "drag_enter"}).to_string();
+                    let _ = proxy_drop.send_event(UserEvent::IpcMessage(msg));
                 }
                 wry::DragDropEvent::Drop { paths, .. } => {
+                    let leave = serde_json::json!({"command": "drag_leave"}).to_string();
+                    let _ = proxy_drop.send_event(UserEvent::IpcMessage(leave));
                     for path in &paths {
-                        let msg = serde_json::json!({
-                            "command": "open_file",
-                            "path": path.to_string_lossy()
-                        })
-                        .to_string();
-                        let _ = proxy_drop.send_event(UserEvent::IpcMessage(msg));
+                        let ext = path
+                            .extension()
+                            .and_then(|e| e.to_str())
+                            .unwrap_or("")
+                            .to_lowercase();
+                        if ext == "md" || ext == "markdown" || ext == "txt" {
+                            let msg = serde_json::json!({
+                                "command": "open_file",
+                                "path": path.to_string_lossy()
+                            })
+                            .to_string();
+                            let _ = proxy_drop.send_event(UserEvent::IpcMessage(msg));
+                        }
                     }
+                }
+                wry::DragDropEvent::Leave => {
+                    let msg = serde_json::json!({"command": "drag_leave"}).to_string();
+                    let _ = proxy_drop.send_event(UserEvent::IpcMessage(msg));
                 }
                 _ => {}
             }
             true
         })
+        .with_browser_accelerator_keys(false)
         .with_devtools(true)
         .build(&window)
         .expect("Failed to build WebView");
