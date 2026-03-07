@@ -82,14 +82,9 @@ fn main() {
         .build(&window)
         .expect("Failed to build WebView");
 
-    // Open CLI file if provided
+    // Store CLI file path to open once JS is ready
     if let Some(file_path) = cli_file {
-        let msg = serde_json::json!({
-            "command": "open_file",
-            "path": file_path
-        })
-        .to_string();
-        let _ = proxy.send_event(UserEvent::IpcMessage(msg));
+        app_state.lock().unwrap().pending_file = Some(file_path);
     }
 
     event_loop.run(move |event, _, control_flow| {

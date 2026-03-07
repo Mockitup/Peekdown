@@ -1,7 +1,11 @@
-pub struct AppState;
+pub struct AppState {
+    pub pending_file: Option<String>,
+}
 
 impl AppState {
     pub fn new() -> Self {
-        Self
+        Self {
+            pending_file: None,
+        }
     }
 }

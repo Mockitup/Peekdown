@@ -1765,7 +1765,7 @@ dependencies = [
 
 [[package]]
 name = "peekdown"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "dirs",
  "rfd",

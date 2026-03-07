@@ -21,7 +21,7 @@ pub fn handle_ipc_message(
     msg: &str,
     webview: &WebView,
     window: &Window,
-    _state: &Arc<Mutex<AppState>>,
+    state: &Arc<Mutex<AppState>>,
 ) {
     let parsed: IpcMessage = match serde_json::from_str(msg) {
         Ok(m) => m,
@@ -120,7 +120,22 @@ pub fn handle_ipc_message(
                 }
             }
         }
-        "ready" => {}
+        "ready" => {
+            let pending = state.lock().unwrap().pending_file.take();
+            if let Some(p) = pending {
+                match file_ops::read_file(&p) {
+                    Ok(contents) => {
+                        send_to_js(webview, "file_opened", &serde_json::json!({
+                            "content": contents,
+                            "path": p
+                        }));
+                    }
+                    Err(e) => send_to_js(webview, "error", &serde_json::json!({
+                        "message": format!("Failed to open file: {e}")
+                    })),
+                }
+            }
+        }
         _ => eprintln!("Unknown IPC command: {}", parsed.command),
     }
 }
