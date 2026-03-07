@@ -121,8 +121,11 @@ pub fn handle_ipc_message(
             }
         }
         "ready" => {
-            let pending = state.lock().unwrap().pending_file.take();
-            if let Some(p) = pending {
+            let (pending_file, pending_content, pending_title) = {
+                let mut st = state.lock().unwrap();
+                (st.pending_file.take(), st.pending_content.take(), st.pending_title.take())
+            };
+            if let Some(p) = pending_file {
                 match file_ops::read_file(&p) {
                     Ok(contents) => {
                         send_to_js(webview, "file_opened", &serde_json::json!({
@@ -134,6 +137,12 @@ pub fn handle_ipc_message(
                         "message": format!("Failed to open file: {e}")
                     })),
                 }
+            } else if let Some(content) = pending_content {
+                let title = pending_title.unwrap_or_else(|| "stdin".to_string());
+                send_to_js(webview, "stdin_opened", &serde_json::json!({
+                    "content": content,
+                    "title": title
+                }));
             }
         }
         _ => eprintln!("Unknown IPC command: {}", parsed.command),

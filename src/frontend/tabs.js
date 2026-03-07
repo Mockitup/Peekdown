@@ -7,7 +7,7 @@ var TabManager = (function() {
     return p.replace(/\\/g, '/');
   }
 
-  function createTab(path, content) {
+  function createTab(path, content, forceMode, forceFilename) {
     if (path) {
       var existing = findTabByPath(path);
       if (existing) {
@@ -33,10 +33,10 @@ var TabManager = (function() {
     var tab = {
       id: id,
       path: path ? normalizePath(path) : null,
-      filename: path ? path.split(/[/\\]/).pop() : 'Untitled',
+      filename: forceFilename || (path ? path.split(/[/\\]/).pop() : 'Untitled'),
       content: content != null ? content : '',
       dirty: false,
-      mode: path ? 'preview' : 'edit',
+      mode: forceMode || (path ? 'preview' : 'edit'),
       scrollTop: 0,
       cursorStart: 0,
       cursorEnd: 0

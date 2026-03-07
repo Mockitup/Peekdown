@@ -18,6 +18,9 @@ window.__fromRust = function(event, data) {
       }
       onFileSaved();
       break;
+    case 'stdin_opened':
+      TabManager.createTab(null, data.content, 'preview', data.title || 'stdin');
+      break;
     case 'error':
       showError(data.message);
       break;

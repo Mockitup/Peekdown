@@ -1,5 +1,6 @@
 #![windows_subsystem = "windows"]
 
+use std::io::Read;
 use std::sync::{Arc, Mutex};
 use tao::{
     dpi::{LogicalPosition, LogicalSize},
@@ -31,8 +32,56 @@ enum UserEvent {
 fn main() {
     let app_state = Arc::new(Mutex::new(state::AppState::new()));
 
-    // Check for CLI arg (file to open)
-    let cli_file = std::env::args().nth(1);
+    // Parse CLI args
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let mut cli_file: Option<String> = None;
+    let mut stdin_flag = false;
+    let mut title_arg: Option<String> = None;
+    {
+        let mut i = 0;
+        while i < args.len() {
+            match args[i].as_str() {
+                "--stdin" => stdin_flag = true,
+                "--title" => {
+                    if i + 1 < args.len() {
+                        i += 1;
+                        title_arg = Some(args[i].clone());
+                    }
+                }
+                _ => {
+                    if cli_file.is_none() {
+                        cli_file = Some(args[i].clone());
+                    }
+                }
+            }
+            i += 1;
+        }
+    }
+
+    // Read stdin if --stdin flag and stdin is a pipe/file (not a console)
+    if stdin_flag {
+        extern "system" {
+            fn GetStdHandle(nStdHandle: u32) -> isize;
+            fn GetFileType(hFile: isize) -> u32;
+        }
+        const STD_INPUT_HANDLE: u32 = 0xFFFF_FFF6; // (DWORD)-10
+        const FILE_TYPE_DISK: u32 = 0x0001;
+        const FILE_TYPE_PIPE: u32 = 0x0003;
+
+        let is_piped = unsafe {
+            let handle = GetStdHandle(STD_INPUT_HANDLE);
+            let ft = GetFileType(handle);
+            ft == FILE_TYPE_PIPE || ft == FILE_TYPE_DISK
+        };
+        if is_piped {
+            let mut buf = String::new();
+            if std::io::stdin().read_to_string(&mut buf).is_ok() && !buf.is_empty() {
+                let mut st = app_state.lock().unwrap();
+                st.pending_content = Some(buf);
+                st.pending_title = title_arg;
+            }
+        }
+    }
 
     let (pos, size) = window_state::load_window_state();
 
