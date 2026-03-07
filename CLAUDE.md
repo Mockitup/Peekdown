@@ -61,7 +61,7 @@ Binary output: `target/release/peekdown.exe`
 - File associations via CLI arg
 
 ## Conventions
-- Keep the binary small: use `opt-level = "s"`, `lto = "fat"`, `panic = "abort"`, `strip = "symbols"`
+- Keep the binary small: use `opt-level = "s"`, `lto = "fat"`, `panic = "abort"`, `strip = "none"` (never strip symbols — needed for crash diagnostics)
 - No external runtime dependencies — everything embedded in the .exe
 - Dark theme with Catppuccin-inspired color palette (Mocha dark, Latte light)
 - JS uses IIFE pattern for modules (TabManager)
