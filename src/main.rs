@@ -4,9 +4,10 @@ use std::borrow::Cow;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
 use tao::{
-    dpi::{LogicalPosition, LogicalSize},
+    dpi::{PhysicalPosition, PhysicalSize},
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy},
+    platform::windows::WindowBuilderExtWindows,
     window::WindowBuilder,
 };
 use windows::Win32::Foundation::{HWND, RECT};
@@ -86,18 +87,27 @@ fn main() {
         }
     }
 
-    let (pos, size) = window_state::load_window_state();
-
+    // The event loop must exist first: creating it makes the process
+    // per-monitor DPI aware, which the placement math depends on.
     let event_loop = EventLoopBuilder::<UserEvent>::with_user_event().build();
     let proxy: EventLoopProxy<UserEvent> = event_loop.create_proxy();
 
+    // Create hidden on the target monitor, then move to the exact saved rect
+    // and show (maximized if it was) so there is no visible jump or flash.
+    let placement = window_state::plan();
+    let (pos, size) = placement.initial_bounds();
     let window = WindowBuilder::new()
         .with_title("Peekdown - Untitled")
         .with_decorations(false)
-        .with_inner_size(LogicalSize::new(size.0 as f64, size.1 as f64))
-        .with_position(LogicalPosition::new(pos.0 as f64, pos.1 as f64))
+        .with_visible(false)
+        .with_window_classname(window_state::WINDOW_CLASS)
+        .with_inner_size(PhysicalSize::new(size.0, size.1))
+        .with_position(PhysicalPosition::new(pos.0, pos.1))
         .build(&event_loop)
         .unwrap();
+    window_state::apply(&window, &placement);
+    // Already shown natively; this keeps tao's own visibility flag in sync.
+    window.set_visible(true);
 
     let full_html = build_html();
     {
@@ -233,12 +243,7 @@ fn main() {
                 event: WindowEvent::CloseRequested,
                 ..
             } => {
-                let inner_size = window.inner_size();
-                let outer_pos = window.outer_position().unwrap_or_default();
-                window_state::save_window_state(
-                    (outer_pos.x, outer_pos.y),
-                    (inner_size.width, inner_size.height),
-                );
+                window_state::save(&window);
                 *control_flow = ControlFlow::Exit;
             }
             _ => {}

@@ -24,7 +24,7 @@ Binary output: `target/release/peekdown.exe`
 - `src/ipc.rs` — IPC message dispatch between Rust and JS
 - `src/file_ops.rs` — File read/write, native open/save dialogs (rfd)
 - `src/state.rs` — App state (empty struct — JS owns all tab state)
-- `src/window_state.rs` — Window position/size persistence (config dir: `peekdown/`)
+- `src/window_state.rs` — Window placement persistence (`%APPDATA%/peekdown/window_state.json`): outer rect in physical px + monitor DPI + maximized; validated against current monitors on startup
 - `build.rs` — Embeds app icon via winresource
 - `assets/icon.ico` — App icon (multi-resolution, generated from icon.png)
 - `src/frontend/` — All HTML/CSS/JS files (embedded at compile time via include_str!)
@@ -45,6 +45,7 @@ Binary output: `target/release/peekdown.exe`
 - Toggle mode: single pane switches between edit (textarea) and preview (rendered HTML)
 - Split mode: side-by-side editor + live preview with debounced sync
 - Theming: CSS custom properties with `[data-theme="light"]` overrides, persisted to localStorage
+- Window placement: never mix tao Logical/Physical units — persist and restore in physical px (mixing them grew the window by the DPI scale on every launch). The window is created hidden on the target monitor (so it starts at that monitor's DPI), moved to the exact rect with `SetWindowPos`, then shown (`SW_SHOWMAXIMIZED` if needed). Window class is `PeekdownWindow` so instances can cascade.
 
 ## Features
 - Multi-tab with auto-hiding tab bar (single tab = no bar)
@@ -59,6 +60,7 @@ Binary output: `target/release/peekdown.exe`
 - Cross-mode selection preservation when toggling edit/preview
 - Drag & drop (single and multi-file)
 - File associations via CLI arg
+- Window size/position/maximized memory, multi-monitor + per-monitor DPI aware, cascades multiple instances
 
 ## Conventions
 - Keep the binary small: use `opt-level = "s"`, `lto = "fat"`, `panic = "abort"`, `strip = "none"` (never strip symbols — needed for crash diagnostics)

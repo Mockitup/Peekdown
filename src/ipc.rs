@@ -81,12 +81,7 @@ pub fn handle_ipc_message(
             window.set_maximized(!window.is_maximized());
         }
         "window_close" => {
-            let inner_size = window.inner_size();
-            let outer_pos = window.outer_position().unwrap_or_default();
-            crate::window_state::save_window_state(
-                (outer_pos.x, outer_pos.y),
-                (inner_size.width, inner_size.height),
-            );
+            crate::window_state::save(window);
             std::process::exit(0);
         }
         "read_image" => {
