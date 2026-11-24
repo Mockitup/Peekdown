@@ -23,6 +23,7 @@ Built with Rust + WebView2. No installer, no runtime dependencies, no Electron.
 - **Recent files** — quick-open panel on empty tabs
 - **Cross-mode selection** — selected text stays selected when toggling edit/preview
 - **File associations** — use as default `.md` viewer via "Open With"
+- **Remembers window placement** — size, position and maximized state, per-monitor-DPI aware; falls back gracefully if a monitor is disconnected, and cascades when opening several files at once
 - **Single executable** — everything embedded, nothing to install
 
 ## Keyboard Shortcuts
